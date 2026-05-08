@@ -1,0 +1,52 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "AWTRIX Gerät",
+        "description": "Gib die IP-Adresse deines Ulanzi TC001 / AWTRIX 3 Geräts ein.",
+        "data": {
+          "awtrix_host": "AWTRIX IP-Adresse"
+        }
+      },
+      "entities": {
+        "title": "Home Connect Entitäten",
+        "description": "Wähle die Entitäten der Home Connect Integration für deinen Geschirrspüler aus. Nur der Betriebsstatus ist erforderlich. Die Türentität wird für die automatische Quittierung benötigt (Tür öffnen beendet die 'Fertig'-Anzeige).",
+        "data": {
+          "operation_state_entity": "Betriebsstatus-Entität (erforderlich)",
+          "remaining_time_entity": "Restlaufzeit-Entität (optional)",
+          "program_phase_entity": "Programmschritt-Entität (optional)",
+          "door_entity": "Tür-Entität (optional – für automatische Quittierung)",
+          "update_interval": "Aktualisierungsintervall während des Betriebs (Minuten)",
+          "text_color": "Textfarbe (Hex, z.B. #00BFFF)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung zum AWTRIX Gerät fehlgeschlagen. IP-Adresse prüfen und sicherstellen, dass das Gerät erreichbar ist.",
+      "timeout": "Zeitüberschreitung der Verbindung. Netzwerkverbindung prüfen.",
+      "invalid_host": "Eine gültige IP-Adresse oder ein Hostname ist erforderlich.",
+      "missing_entity": "Bitte wähle eine Betriebsstatus-Entität aus."
+    },
+    "abort": {
+      "already_configured": "Dieses AWTRIX Gerät ist bereits konfiguriert."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Einstellungen aktualisieren",
+        "data": {
+          "operation_state_entity": "Betriebsstatus-Entität (erforderlich)",
+          "remaining_time_entity": "Restlaufzeit-Entität (optional)",
+          "program_phase_entity": "Programmschritt-Entität (optional)",
+          "door_entity": "Tür-Entität (optional – für automatische Quittierung)",
+          "update_interval": "Aktualisierungsintervall während des Betriebs (Minuten)",
+          "text_color": "Textfarbe (Hex)"
+        }
+      }
+    },
+    "error": {
+      "missing_entity": "Bitte wähle eine Betriebsstatus-Entität aus."
+    }
+  }
+}
