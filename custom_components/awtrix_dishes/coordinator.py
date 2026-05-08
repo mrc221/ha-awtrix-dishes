@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from homeassistant.core import Event, HomeAssistant, callback
@@ -399,7 +399,16 @@ class AwtrixDishesCoordinator(DataUpdateCoordinator[DishwasherData]):
                 try:
                     remaining_sec = int(float(rem.state))
                 except (ValueError, TypeError):
-                    pass
+                    # State may be an ISO 8601 timestamp (device_class: timestamp).
+                    # Compute remaining seconds as the delta to now.
+                    try:
+                        end_dt = datetime.fromisoformat(rem.state)
+                        if end_dt.tzinfo is None:
+                            end_dt = end_dt.replace(tzinfo=timezone.utc)
+                        delta = (end_dt - datetime.now(tz=timezone.utc)).total_seconds()
+                        remaining_sec = max(0, int(delta))
+                    except (ValueError, TypeError):
+                        pass
 
         phase = ""
         if self._phase_entity:
