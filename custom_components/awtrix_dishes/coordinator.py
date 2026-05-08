@@ -31,26 +31,30 @@ from typing import Any
 
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.event import async_call_later, async_track_state_change_event
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .awtrix import AwtrixClient
 from .const import (
     APP_NAME_DONE,
+    APP_NAME_DRYING,
     APP_NAME_STEP,
     APP_NAME_TIME,
     CONF_AWTRIX_HOST,
     CONF_DOOR_ENTITY,
+    CONF_DRYING_TIMER,
     CONF_OPERATION_STATE_ENTITY,
     CONF_PROGRAM_PHASE_ENTITY,
     CONF_REMAINING_TIME_ENTITY,
     CONF_TEXT_COLOR,
     CONF_UPDATE_INTERVAL,
+    DEFAULT_DRYING_TIMER,
     DEFAULT_FINISHED_COLOR,
     DEFAULT_TEXT_COLOR,
     DEFAULT_UPDATE_INTERVAL,
     DOMAIN,
     FINISHED_TEXT,
+    ICON_DRYING,
     ICON_FINISHED,
     ICON_PROGRAM_STEP,
     ICON_REMAINING_TIME,
@@ -152,6 +156,8 @@ class AwtrixDishesCoordinator(DataUpdateCoordinator[DishwasherData]):
         # Internal state flags
         self._finished_notified: bool = False
         self._running_apps_active: bool = False
+        self._drying_until: datetime | None = None
+        self._unsub_drying_timer: Any = None
 
         # Listener unsubscribe handles
         self._unsub_listeners: list = []
@@ -181,6 +187,10 @@ class AwtrixDishesCoordinator(DataUpdateCoordinator[DishwasherData]):
     def _color(self) -> str:
         return self._cfg.get(CONF_TEXT_COLOR, DEFAULT_TEXT_COLOR)
 
+    @property
+    def _drying_timer_minutes(self) -> int:
+        return int(self._cfg.get(CONF_DRYING_TIMER, DEFAULT_DRYING_TIMER))
+
     # ── Listener management ────────────────────────────────────────────────────
 
     @callback
@@ -201,6 +211,7 @@ class AwtrixDishesCoordinator(DataUpdateCoordinator[DishwasherData]):
         for unsub in self._unsub_listeners:
             unsub()
         self._unsub_listeners.clear()
+        self._cancel_drying_timer()
 
     # ── State-change handler ───────────────────────────────────────────────────
 
@@ -218,14 +229,19 @@ class AwtrixDishesCoordinator(DataUpdateCoordinator[DishwasherData]):
             self._on_door_change(new_state.state)
 
     def _on_operation_change(self, state_val: str) -> None:
-        if _is_finished(state_val) and not self._finished_notified:
+        if _is_finished(state_val) and not self._finished_notified and self._drying_until is None:
             _LOGGER.info("Dishwasher finished — triggering AWTRIX notification")
-            self.hass.async_create_task(self._send_finished_notification())
+            if self._drying_timer_minutes > 0:
+                self.hass.async_create_task(self._start_drying_timer())
+            else:
+                self.hass.async_create_task(self._send_finished_notification())
         elif not _is_running(state_val) and not _is_finished(state_val):
             # Inactive / error / ready — clean up any running apps
             if self._running_apps_active:
                 _LOGGER.debug("Dishwasher no longer running — removing status apps")
                 self.hass.async_create_task(self._cleanup_running_apps())
+            if self._drying_until is not None:
+                self.hass.async_create_task(self._cleanup_drying_app())
 
     def _on_door_change(self, state_val: str) -> None:
         if _is_door_open(state_val) and self._finished_notified:
@@ -302,6 +318,65 @@ class AwtrixDishesCoordinator(DataUpdateCoordinator[DishwasherData]):
             await self._awtrix.delete_custom_app(APP_NAME_TIME)
             self._running_apps_active = False
 
+    # ── Drying timer ───────────────────────────────────────────────────────────
+
+    def _cancel_drying_timer(self) -> None:
+        """Cancel the scheduled drying-timer expiry callback if active."""
+        if self._unsub_drying_timer is not None:
+            self._unsub_drying_timer()
+            self._unsub_drying_timer = None
+
+    async def _start_drying_timer(self) -> None:
+        """Start the drying countdown after the programme finishes."""
+        await self._cleanup_running_apps()
+        self._drying_until = datetime.now() + timedelta(minutes=self._drying_timer_minutes)
+        await self._send_drying_app()
+        self._unsub_drying_timer = async_call_later(
+            self.hass,
+            self._drying_timer_minutes * 60,
+            self._on_drying_timer_expired,
+        )
+        _LOGGER.info(
+            "Drying timer started: %d minutes", self._drying_timer_minutes
+        )
+
+    async def _send_drying_app(self) -> None:
+        """Push the drying countdown app to the AWTRIX display."""
+        if self._drying_until is None:
+            return
+        remaining = (self._drying_until - datetime.now()).total_seconds()
+        text = f"Trocknen {_format_remaining(max(0, int(remaining)))}"
+        await self._awtrix.set_custom_app(
+            APP_NAME_DRYING,
+            {
+                "text": text,
+                "icon": ICON_DRYING,
+                "color": self._color,
+                "scrollSpeed": 50,
+            },
+        )
+
+    @callback
+    def _on_drying_timer_expired(self, _now: Any) -> None:
+        """Fired by async_call_later when the drying countdown reaches zero."""
+        _LOGGER.info("Drying timer expired — showing finished notification")
+        self._unsub_drying_timer = None
+        self.hass.async_create_task(self._finish_drying())
+
+    async def _finish_drying(self) -> None:
+        """Remove the drying app and switch to the finished notification."""
+        await self._awtrix.delete_custom_app(APP_NAME_DRYING)
+        self._drying_until = None
+        await self._send_finished_notification()
+
+    async def _cleanup_drying_app(self) -> None:
+        """Cancel the drying timer and remove the drying app from the display."""
+        self._cancel_drying_timer()
+        if self._drying_until is not None:
+            await self._awtrix.delete_custom_app(APP_NAME_DRYING)
+            self._drying_until = None
+            _LOGGER.debug("Drying app removed")
+
     # ── Main update cycle ──────────────────────────────────────────────────────
 
     async def _async_update_data(self) -> DishwasherData:
@@ -335,19 +410,28 @@ class AwtrixDishesCoordinator(DataUpdateCoordinator[DishwasherData]):
         # ── Update AWTRIX display ───────────────────────────────────────────────
         if _is_running(state_val):
             await self._send_running_apps(phase, remaining_sec)
-            # If we somehow come back to "running" after finished, reset flag
+            # If we somehow come back to "running" after finished/drying, reset flags
             if self._finished_notified:
                 self._finished_notified = False
+            if self._drying_until is not None:
+                await self._cleanup_drying_app()
 
         elif _is_finished(state_val):
-            # State listener fires immediately; this is a safety net for
-            # HA restarts where the listener fires after the first poll.
-            if not self._finished_notified:
-                await self._send_finished_notification()
+            if self._drying_until is not None:
+                # Refresh drying countdown on every poll
+                await self._send_drying_app()
+            elif not self._finished_notified:
+                # State listener fires immediately; this is a safety net for
+                # HA restarts where the listener fires after the first poll.
+                if self._drying_timer_minutes > 0:
+                    await self._start_drying_timer()
+                else:
+                    await self._send_finished_notification()
 
         else:
             # Inactive / Ready / Error / Paused / DelayedStart
             await self._cleanup_running_apps()
+            await self._cleanup_drying_app()
             # If we missed the door event (e.g. HA was restarted while
             # finished was showing), honour the current door state.
             if self._finished_notified and self._door_entity:

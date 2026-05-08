@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 DOMAIN = "awtrix_dishes"
-INTEGRATION_VERSION = "1.0.0"
+INTEGRATION_VERSION = "1.0.1"
 
 # ── Config entry keys ──────────────────────────────────────────────────────────
 CONF_AWTRIX_HOST = "awtrix_host"
@@ -12,21 +12,25 @@ CONF_PROGRAM_PHASE_ENTITY = "program_phase_entity"
 CONF_DOOR_ENTITY = "door_entity"
 CONF_UPDATE_INTERVAL = "update_interval"   # minutes, while running
 CONF_TEXT_COLOR = "text_color"
+CONF_DRYING_TIMER = "drying_timer"         # minutes, 0 = disabled
 
 # ── Defaults ───────────────────────────────────────────────────────────────────
 DEFAULT_UPDATE_INTERVAL = 5   # minutes
 DEFAULT_TEXT_COLOR = "#00BFFF"
 DEFAULT_FINISHED_COLOR = "#00FF00"
+DEFAULT_DRYING_TIMER = 0      # disabled by default
 
 # ── AWTRIX icon IDs (from requirements) ───────────────────────────────────────
 ICON_PROGRAM_STEP = "17590"
 ICON_REMAINING_TIME = "17592"
 ICON_FINISHED = "47488"
+ICON_DRYING = "61038"
 
 # ── AWTRIX custom app names ───────────────────────────────────────────────────
 APP_NAME_STEP = "dishes_step"
 APP_NAME_TIME = "dishes_time"
 APP_NAME_DONE = "dishes_done"
+APP_NAME_DRYING = "dishes_drying"
 
 # ── Keys that live in entry.options (user-editable after setup) ───────────────
 OPTION_KEYS = (
@@ -36,6 +40,7 @@ OPTION_KEYS = (
     CONF_DOOR_ENTITY,
     CONF_UPDATE_INTERVAL,
     CONF_TEXT_COLOR,
+    CONF_DRYING_TIMER,
 )
 
 # ── Home Connect operation state values (short form as seen in HA) ─────────────
@@ -63,3 +68,4 @@ PHASE_LABELS_DE: dict[str, str] = {
 
 # ── Text shown on the finished AWTRIX app ─────────────────────────────────────
 FINISHED_TEXT = "Geschirrspüler fertig!"
+DRYING_TEXT = "Trocknen"

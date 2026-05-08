@@ -24,11 +24,13 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .const import (
     CONF_AWTRIX_HOST,
     CONF_DOOR_ENTITY,
+    CONF_DRYING_TIMER,
     CONF_OPERATION_STATE_ENTITY,
     CONF_PROGRAM_PHASE_ENTITY,
     CONF_REMAINING_TIME_ENTITY,
     CONF_TEXT_COLOR,
     CONF_UPDATE_INTERVAL,
+    DEFAULT_DRYING_TIMER,
     DEFAULT_TEXT_COLOR,
     DEFAULT_UPDATE_INTERVAL,
     DOMAIN,
@@ -80,6 +82,10 @@ def _entities_schema(defaults: dict[str, Any]) -> vol.Schema:
                 default=defaults.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL),
             ): _int_selector(1, 60),
             vol.Required(
+                CONF_DRYING_TIMER,
+                default=defaults.get(CONF_DRYING_TIMER, DEFAULT_DRYING_TIMER),
+            ): _int_selector(0, 120),
+            vol.Required(
                 CONF_TEXT_COLOR,
                 default=defaults.get(CONF_TEXT_COLOR, DEFAULT_TEXT_COLOR),
             ): selector.TextSelector(),
@@ -107,6 +113,9 @@ def _normalize_options(user_input: dict[str, Any]) -> dict[str, Any]:
         CONF_DOOR_ENTITY: user_input.get(CONF_DOOR_ENTITY, ""),
         CONF_UPDATE_INTERVAL: max(
             1, min(60, int(user_input.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)))
+        ),
+        CONF_DRYING_TIMER: max(
+            0, min(120, int(user_input.get(CONF_DRYING_TIMER, DEFAULT_DRYING_TIMER)))
         ),
         CONF_TEXT_COLOR: user_input.get(CONF_TEXT_COLOR, DEFAULT_TEXT_COLOR) or DEFAULT_TEXT_COLOR,
     }
