@@ -17,6 +17,7 @@
           "program_phase_entity": "Programmschritt-Entität (optional)",
           "door_entity": "Tür-Entität (optional – für automatische Quittierung)",
           "update_interval": "Aktualisierungsintervall während des Betriebs (Minuten)",
+          "drying_timer": "Trocknungstimer nach Programmende (Minuten, 0 = deaktiviert)",
           "text_color": "Textfarbe (Hex, z.B. #00BFFF)"
         }
       }
@@ -41,6 +42,7 @@
           "program_phase_entity": "Programmschritt-Entität (optional)",
           "door_entity": "Tür-Entität (optional – für automatische Quittierung)",
           "update_interval": "Aktualisierungsintervall während des Betriebs (Minuten)",
+          "drying_timer": "Trocknungstimer nach Programmende (Minuten, 0 = deaktiviert)",
           "text_color": "Textfarbe (Hex)"
         }
       }

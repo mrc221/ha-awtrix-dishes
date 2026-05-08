@@ -17,6 +17,7 @@
           "program_phase_entity": "Programme Phase Entity (optional)",
           "door_entity": "Door Entity (optional — for auto-acknowledgement)",
           "update_interval": "Refresh Interval while Running (minutes)",
+          "drying_timer": "Drying Timer after Programme End (minutes, 0 = disabled)",
           "text_color": "Text Colour (hex, e.g. #00BFFF)"
         }
       }
@@ -41,6 +42,7 @@
           "program_phase_entity": "Programme Phase Entity (optional)",
           "door_entity": "Door Entity (optional — for auto-acknowledgement)",
           "update_interval": "Refresh Interval while Running (minutes)",
+          "drying_timer": "Drying Timer after Programme End (minutes, 0 = disabled)",
           "text_color": "Text Colour (hex)"
         }
       }
