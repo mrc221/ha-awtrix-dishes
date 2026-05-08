@@ -23,7 +23,7 @@
     },
     "error": {
       "cannot_connect": "Verbindung zum AWTRIX Gerät fehlgeschlagen. IP-Adresse prüfen und sicherstellen, dass das Gerät erreichbar ist.",
-      "timeout": "Verbindung zeitüberschreitung. Netzwerkverbindung prüfen.",
+      "timeout": "Zeitüberschreitung der Verbindung. Netzwerkverbindung prüfen.",
       "invalid_host": "Eine gültige IP-Adresse oder ein Hostname ist erforderlich.",
       "missing_entity": "Bitte wähle eine Betriebsstatus-Entität aus."
     },
