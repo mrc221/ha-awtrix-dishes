@@ -1,7 +1,7 @@
 {
   "domain": "awtrix_dishes",
   "name": "AWTRIX Dishes",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "documentation": "https://github.com/mrc221/ha-awtrix-dishes",
   "issue_tracker": "https://github.com/mrc221/ha-awtrix-dishes/issues",
   "requirements": [],
