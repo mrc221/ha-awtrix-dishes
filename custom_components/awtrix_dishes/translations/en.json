@@ -1,0 +1,52 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "AWTRIX Device",
+        "description": "Enter the IP address of your Ulanzi TC001 / AWTRIX 3 device.",
+        "data": {
+          "awtrix_host": "AWTRIX IP Address"
+        }
+      },
+      "entities": {
+        "title": "Home Connect Entities",
+        "description": "Select the entities provided by the Home Connect integration for your dishwasher. Only the operation state is required. The door entity is needed for automatic acknowledgement (opening the door dismisses the 'finished' notification).",
+        "data": {
+          "operation_state_entity": "Operation State Entity (required)",
+          "remaining_time_entity": "Remaining Programme Time Entity (optional)",
+          "program_phase_entity": "Programme Phase Entity (optional)",
+          "door_entity": "Door Entity (optional — for auto-acknowledgement)",
+          "update_interval": "Refresh Interval while Running (minutes)",
+          "text_color": "Text Colour (hex, e.g. #00BFFF)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the AWTRIX device. Check the IP address and ensure the device is online.",
+      "timeout": "Connection timed out. Check your network.",
+      "invalid_host": "A valid IP address or hostname is required.",
+      "missing_entity": "Please select an operation state entity."
+    },
+    "abort": {
+      "already_configured": "This AWTRIX device is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Update Settings",
+        "data": {
+          "operation_state_entity": "Operation State Entity (required)",
+          "remaining_time_entity": "Remaining Programme Time Entity (optional)",
+          "program_phase_entity": "Programme Phase Entity (optional)",
+          "door_entity": "Door Entity (optional — for auto-acknowledgement)",
+          "update_interval": "Refresh Interval while Running (minutes)",
+          "text_color": "Text Colour (hex)"
+        }
+      }
+    },
+    "error": {
+      "missing_entity": "Please select an operation state entity."
+    }
+  }
+}
