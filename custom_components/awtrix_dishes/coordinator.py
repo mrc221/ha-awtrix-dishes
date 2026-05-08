@@ -235,8 +235,19 @@ class AwtrixDishesCoordinator(DataUpdateCoordinator[DishwasherData]):
                 self.hass.async_create_task(self._start_drying_timer())
             else:
                 self.hass.async_create_task(self._send_finished_notification())
-        elif not _is_running(state_val) and not _is_finished(state_val):
-            # Inactive / error / ready — clean up any running apps
+        elif _is_running(state_val):
+            # Running — push the status apps to the display immediately.
+            # Without this, the user has to wait up to ``CONF_UPDATE_INTERVAL``
+            # minutes after starting the dishwasher before anything appears.
+            _LOGGER.info("Dishwasher started running — refreshing AWTRIX display")
+            # Reset stale flags from a previous cycle.
+            if self._finished_notified:
+                self._finished_notified = False
+            if self._drying_until is not None:
+                self.hass.async_create_task(self._cleanup_drying_app())
+            self.hass.async_create_task(self.async_request_refresh())
+        elif not _is_finished(state_val):
+            # Inactive / error / ready / aborting — clean up any running apps
             if self._running_apps_active:
                 _LOGGER.debug("Dishwasher no longer running — removing status apps")
                 self.hass.async_create_task(self._cleanup_running_apps())
@@ -252,7 +263,7 @@ class AwtrixDishesCoordinator(DataUpdateCoordinator[DishwasherData]):
 
     async def _send_running_apps(self, phase: str, remaining_sec: int) -> None:
         """Push fresh running-status custom apps to the AWTRIX display."""
-        phase_text = phase or "Läuft…"
+        phase_text = phase or "Laeuft"
 
         if remaining_sec > 0:
             time_text = (
@@ -260,7 +271,15 @@ class AwtrixDishesCoordinator(DataUpdateCoordinator[DishwasherData]):
                 f" | {_end_time(remaining_sec)} Uhr"
             )
         else:
-            time_text = "Läuft…"
+            time_text = "Laeuft"
+
+        # ``lifetime`` ensures the app self-destructs if the integration goes
+        # away without an explicit cleanup. It is generously sized so it
+        # always survives at least one update cycle.
+        lifetime_seconds = max(
+            600,
+            self._cfg.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL) * 60 * 3,
+        )
 
         await self._awtrix.set_custom_app(
             APP_NAME_STEP,
@@ -268,7 +287,10 @@ class AwtrixDishesCoordinator(DataUpdateCoordinator[DishwasherData]):
                 "text": phase_text,
                 "icon": ICON_PROGRAM_STEP,
                 "color": self._color,
-                "scrollSpeed": 50,
+                "duration": 7,
+                "scrollSpeed": 80,
+                "lifetime": lifetime_seconds,
+                "lifetimeMode": 0,
             },
         )
         await self._awtrix.set_custom_app(
@@ -277,7 +299,10 @@ class AwtrixDishesCoordinator(DataUpdateCoordinator[DishwasherData]):
                 "text": time_text,
                 "icon": ICON_REMAINING_TIME,
                 "color": self._color,
-                "scrollSpeed": 50,
+                "duration": 7,
+                "scrollSpeed": 80,
+                "lifetime": lifetime_seconds,
+                "lifetimeMode": 0,
             },
         )
         self._running_apps_active = True
@@ -292,8 +317,9 @@ class AwtrixDishesCoordinator(DataUpdateCoordinator[DishwasherData]):
                 "text": FINISHED_TEXT,
                 "icon": ICON_FINISHED,
                 "color": DEFAULT_FINISHED_COLOR,
-                "scrollSpeed": 50,
-                "repeat": -1,  # loop indefinitely
+                "duration": 10,
+                "scrollSpeed": 80,
+                "pushIcon": 2,
             },
         )
         if success:
@@ -352,7 +378,8 @@ class AwtrixDishesCoordinator(DataUpdateCoordinator[DishwasherData]):
                 "text": text,
                 "icon": ICON_DRYING,
                 "color": self._color,
-                "scrollSpeed": 50,
+                "duration": 7,
+                "scrollSpeed": 80,
             },
         )
 

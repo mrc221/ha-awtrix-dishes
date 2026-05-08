@@ -108,7 +108,31 @@ The integration creates a `sensor.awtrix_dishes_dishwasher_status` entity with t
 
 ---
 
+## Troubleshooting
+
+If nothing appears on your AWTRIX display:
+
+1. **Enable debug logging** in `configuration.yaml` and reload the integration:
+   ```yaml
+   logger:
+     logs:
+       custom_components.awtrix_dishes: debug
+   ```
+   Each AWTRIX HTTP request and its response are logged. Look for `AWTRIX POST` lines.
+2. **Verify the AWTRIX HTTP API is reachable** from Home Assistant — open `http://<awtrix-ip>/api/stats` in a browser.
+3. **Make sure the icon IDs are present on the device.** Open the AWTRIX web UI → *Icons* and download the IDs `17590`, `17592`, `47488` (and `61038` if you use the drying timer).
+4. **Confirm the operation-state entity** reports `run`, `finished`, etc. — not `unknown` or `unavailable`. Some Home Connect dishwashers don't expose a *program phase* sensor; the integration falls back to "Laeuft" in that case, which is normal.
+
+---
+
 ## Changelog
+
+### 1.0.3
+* **Fix**: Push the running-status apps to AWTRIX **immediately** when the dishwasher starts, instead of waiting for the next poll interval (could be up to 5 minutes).
+* **Fix**: `delete_custom_app` now sends a truly empty body. Some AWTRIX 3 firmware revisions interpreted the previous `{}` payload as "create empty app", leaving stale entries on the rotation.
+* **Fix**: Replaced the unicode ellipsis `…` with ASCII `...`/plain text — the AWTRIX 3 default font does not render U+2026 reliably.
+* **Improvement**: Custom apps now include `duration`, `scrollSpeed` and a generous `lifetime` so they survive at least one poll cycle and self-clean if Home Assistant goes away.
+* **Improvement**: Verbose debug logging for every AWTRIX HTTP request — URL, payload and response are now logged at `DEBUG` level.
 
 ### 1.0.2
 * **Fix**: The remaining time entity now supports both numeric sensors (seconds) and `device_class: timestamp` sensors (ISO 8601 end datetime). Previously, timestamp-type sensors silently yielded `remaining_seconds = 0`.

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 DOMAIN = "awtrix_dishes"
-INTEGRATION_VERSION = "1.0.2"
+INTEGRATION_VERSION = "1.0.3"
 
 # ── Config entry keys ──────────────────────────────────────────────────────────
 CONF_AWTRIX_HOST = "awtrix_host"
