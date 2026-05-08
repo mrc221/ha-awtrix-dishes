@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 DOMAIN = "awtrix_dishes"
-INTEGRATION_VERSION = "1.0.0"
+INTEGRATION_VERSION = "1.0.1"
 
 # ── Config entry keys ──────────────────────────────────────────────────────────
 CONF_AWTRIX_HOST = "awtrix_host"
@@ -68,3 +68,4 @@ PHASE_LABELS_DE: dict[str, str] = {
 
 # ── Text shown on the finished AWTRIX app ─────────────────────────────────────
 FINISHED_TEXT = "Geschirrspüler fertig!"
+DRYING_TEXT = "Trocknen"
